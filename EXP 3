@@ -1,0 +1,78 @@
+const mongoose = require("mongoose");
+
+mongoose.connect("mongodb://127.0.0.1:27017/ecommerceDB", {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => console.log("Connected to MongoDB"))
+.catch(err => console.error("MongoDB connection error:", err));
+
+const variantSchema = new mongoose.Schema({
+  color: String,
+  size: String,
+  stock: Number
+});
+
+const productSchema = new mongoose.Schema({
+  name: String,
+  price: Number,
+  category: String,
+  variants: [variantSchema]
+});
+
+const Product = mongoose.model("Product", productSchema);
+
+async function runDemo() {
+  await Product.deleteMany({});
+
+  await Product.insertMany([
+    {
+      name: "T-Shirt",
+      price: 499,
+      category: "Clothing",
+      variants: [
+        { color: "Red", size: "M", stock: 25 },
+        { color: "Blue", size: "L", stock: 10 },
+        { color: "Black", size: "S", stock: 15 }
+      ]
+    },
+    {
+      name: "Sneakers",
+      price: 2999,
+      category: "Footwear",
+      variants: [
+        { color: "White", size: "9", stock: 8 },
+        { color: "Black", size: "10", stock: 12 }
+      ]
+    },
+    {
+      name: "Backpack",
+      price: 1599,
+      category: "Accessories",
+      variants: [
+        { color: "Grey", size: "Standard", stock: 20 },
+        { color: "Blue", size: "Standard", stock: 5 }
+      ]
+    }
+  ]);
+
+  console.log("\nAll Products:");
+  const allProducts = await Product.find();
+  console.log(allProducts);
+
+  console.log("\nProducts in 'Clothing' category:");
+  const clothingProducts = await Product.find({ category: "Clothing" });
+  console.log(clothingProducts);
+
+  console.log("\nProject only name and variant details (color, stock):");
+  const projectedData = await Product.find({}, { name: 1, "variants.color": 1, "variants.stock": 1 });
+  console.log(projectedData);
+
+  console.log("\nFind products with a specific variant color (e.g. Blue):");
+  const blueVariantProducts = await Product.find({ "variants.color": "Blue" });
+  console.log(blueVariantProducts);
+
+  mongoose.connection.close();
+}
+
+runDemo();
